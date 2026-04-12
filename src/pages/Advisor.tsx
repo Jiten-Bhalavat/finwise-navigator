@@ -1,223 +1,174 @@
-import { useState } from "react";
-import { Send, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Send, Bot, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { getStock, searchStocks, type Stock } from "@/data/stocks";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
-  stock?: Stock;
-  recommendation?: "Buy" | "Hold" | "Sell";
-  sentiment?: "bullish" | "bearish" | "neutral";
+  loading?: boolean;
 }
 
-function getRecommendation(stock: Stock): { rec: "Buy" | "Hold" | "Sell"; sentiment: "bullish" | "bearish" | "neutral"; reasoning: string } {
-  const history = stock.priceHistory;
-  const recent = history.slice(-30);
-  const older = history.slice(-60, -30);
-  const recentAvg = recent.reduce((s, h) => s + h.price, 0) / recent.length;
-  const olderAvg = older.reduce((s, h) => s + h.price, 0) / older.length;
-  const momentum = (recentAvg - olderAvg) / olderAvg;
-
-  if (momentum > 0.03) {
-    return { rec: "Buy", sentiment: "bullish", reasoning: `${stock.name} shows strong upward momentum over the last 30 days with a ${(momentum * 100).toFixed(1)}% trend. The current price of $${stock.currentPrice} is trending above its 60-day average. With a P/E ratio of ${stock.peRatio}, this could be a good entry point if you believe in the company's growth story.` };
-  } else if (momentum < -0.03) {
-    return { rec: "Sell", sentiment: "bearish", reasoning: `${stock.name} has been declining with a ${(momentum * 100).toFixed(1)}% downward trend. The stock is trading below its recent average. Consider waiting for a stabilization before entering. Current P/E of ${stock.peRatio} may not justify the price given the downtrend.` };
-  }
-  return { rec: "Hold", sentiment: "neutral", reasoning: `${stock.name} is trading sideways with minimal momentum (${(momentum * 100).toFixed(1)}%). The stock is near its average price range. With a P/E of ${stock.peRatio} and market cap of ${stock.marketCap}, it's a stable hold. Consider your portfolio allocation before making changes.` };
+// ─── LangGraph agent stub ──────────────────────────────────────────────────
+// Replace this function body with the real LangGraph / ChatGPT agent call.
+// It receives the full message history and the latest user query.
+async function runLangGraphAgent(
+  _messages: Message[],
+  _query: string
+): Promise<string> {
+  // TODO: wire up LangGraph agent here
+  await new Promise((r) => setTimeout(r, 1200)); // simulate latency
+  return "The LangGraph agent is not yet connected. Once integrated, it will research the stock you asked about and return a detailed AI-powered analysis here.";
 }
+// ──────────────────────────────────────────────────────────────────────────
 
-function StockChart({ stock }: { stock: Stock }) {
-  const data = stock.priceHistory.slice(-90).map((h) => ({
-    date: h.date.slice(5),
-    price: h.price,
-  }));
-
-  return (
-    <div className="h-64 w-full">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data}>
-          <defs>
-            <linearGradient id="priceGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(210, 55%, 55%)" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="hsl(210, 55%, 55%)" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-          <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
-          <YAxis domain={["auto", "auto"]} tick={{ fontSize: 11 }} className="text-muted-foreground" />
-          <Tooltip
-            contentStyle={{
-              background: "hsl(var(--card))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "8px",
-              fontSize: "12px",
-            }}
-          />
-          <Area type="monotone" dataKey="price" stroke="hsl(210, 55%, 55%)" fill="url(#priceGrad)" strokeWidth={2} />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
+const suggestedQueries = [
+  "Should I buy Apple stock right now?",
+  "Analyse NVIDIA's recent performance",
+  "Is Tesla overvalued?",
+  "Compare Microsoft vs Google",
+];
 
 export default function AdvisorPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const handleSend = (text?: string) => {
-    const msg = text ?? input;
-    if (!msg.trim()) return;
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-    const userMsg: Message = { role: "user", content: msg };
-
-    // Try to find a stock ticker in the message
-    const words = msg.split(/\s+/);
-    let foundStock: Stock | undefined;
-    for (const w of words) {
-      foundStock = getStock(w.replace(/[^a-zA-Z]/g, ""));
-      if (foundStock) break;
-    }
-    if (!foundStock) {
-      const results = searchStocks(msg);
-      if (results.length > 0) foundStock = results[0];
-    }
-
-    let assistantMsg: Message;
-    if (foundStock) {
-      const { rec, sentiment, reasoning } = getRecommendation(foundStock);
-      assistantMsg = {
-        role: "assistant",
-        content: reasoning,
-        stock: foundStock,
-        recommendation: rec,
-        sentiment,
-      };
-    } else {
-      assistantMsg = {
-        role: "assistant",
-        content: `I couldn't find a specific stock in your query. Try asking about a specific company like "Should I buy Apple?" or "Analyze NVDA". I can provide price charts, key metrics, and buy/hold/sell recommendations for any of the top 20 US stocks.`,
-      };
-    }
-
-    setMessages((prev) => [...prev, userMsg, assistantMsg]);
+  const handleSend = async (text?: string) => {
+    const query = text ?? input;
+    if (!query.trim() || loading) return;
     setInput("");
+
+    const userMsg: Message = { role: "user", content: query };
+    const placeholderMsg: Message = { role: "assistant", content: "", loading: true };
+
+    setMessages((prev) => [...prev, userMsg, placeholderMsg]);
+    setLoading(true);
+
+    try {
+      const reply = await runLangGraphAgent([...messages, userMsg], query);
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { role: "assistant", content: reply },
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { role: "assistant", content: "Something went wrong. Please try again." },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const suggestedQueries = [
-    "Should I buy Apple stock?",
-    "Analyze NVDA",
-    "Is Tesla a good investment?",
-    "What about Microsoft?",
-  ];
-
   return (
-    <div className="max-w-4xl mx-auto space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>AI Stock Advisor</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Ask about any stock and get AI-powered analysis with charts and recommendations.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Chat messages */}
-          <div className="max-h-[60vh] overflow-y-auto space-y-4">
-            {messages.length === 0 && (
-              <div className="text-center py-8 space-y-4">
-                <p className="text-muted-foreground">Ask about any stock to get started</p>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {suggestedQueries.map((q) => (
-                    <Button key={q} variant="outline" size="sm" onClick={() => handleSend(q)}>
-                      {q}
-                    </Button>
-                  ))}
+    <div className="max-w-3xl mx-auto h-[calc(100vh-8rem)] flex flex-col gap-4">
+      <div>
+        <h1 className="text-2xl font-bold">AI Stock Advisor</h1>
+        <p className="text-sm text-muted-foreground">
+          Powered by ChatGPT + LangGraph — ask any question and get deep research on any stock.
+        </p>
+      </div>
+
+      <Card className="flex-1 flex flex-col overflow-hidden">
+        {/* Message area */}
+        <ScrollArea className="flex-1 px-4 py-4">
+          {messages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center gap-6 py-16 text-center">
+              <Bot className="h-12 w-12 text-muted-foreground/40" />
+              <div className="space-y-1">
+                <p className="font-medium">Ask me anything about stocks</p>
+                <p className="text-sm text-muted-foreground">
+                  I'll research and analyse it for you
+                </p>
+              </div>
+              <div className="flex flex-wrap justify-center gap-2 max-w-md">
+                {suggestedQueries.map((q) => (
+                  <Button
+                    key={q}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => handleSend(q)}
+                  >
+                    {q}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {messages.map((m, i) => (
+                <div
+                  key={i}
+                  className={`flex items-start gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}
+                >
+                  {/* Avatar */}
+                  <div
+                    className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                      m.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted border"
+                    }`}
+                  >
+                    {m.role === "user" ? <User size={14} /> : <Bot size={14} />}
+                  </div>
+
+                  {/* Bubble */}
+                  <div
+                    className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                      m.role === "user"
+                        ? "bg-primary text-primary-foreground rounded-tr-sm"
+                        : "bg-muted/50 border rounded-tl-sm"
+                    }`}
+                  >
+                    {m.loading ? (
+                      <span className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 size={14} className="animate-spin" />
+                        Researching…
+                      </span>
+                    ) : (
+                      m.content
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              ))}
+              <div ref={bottomRef} />
+            </div>
+          )}
+        </ScrollArea>
 
-            {messages.map((m, i) => (
-              <div key={i}>
-                {m.role === "user" ? (
-                  <div className="flex justify-end">
-                    <div className="bg-primary text-primary-foreground rounded-lg px-4 py-2 max-w-[80%] text-sm">
-                      {m.content}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {m.recommendation && (
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={m.recommendation === "Buy" ? "default" : m.recommendation === "Sell" ? "destructive" : "secondary"}
-                          className="text-sm"
-                        >
-                          {m.recommendation === "Buy" && <TrendingUp className="h-3 w-3 mr-1" />}
-                          {m.recommendation === "Sell" && <TrendingDown className="h-3 w-3 mr-1" />}
-                          {m.recommendation === "Hold" && <Minus className="h-3 w-3 mr-1" />}
-                          {m.recommendation}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {m.sentiment}
-                        </Badge>
-                      </div>
-                    )}
-                    <div className="bg-card border rounded-lg px-4 py-3 text-sm">
-                      {m.content}
-                    </div>
-                    {m.stock && (
-                      <>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          <Card className="p-3">
-                            <p className="text-xs text-muted-foreground">Price</p>
-                            <p className="font-bold">${m.stock.currentPrice}</p>
-                          </Card>
-                          <Card className="p-3">
-                            <p className="text-xs text-muted-foreground">P/E Ratio</p>
-                            <p className="font-bold">{m.stock.peRatio}</p>
-                          </Card>
-                          <Card className="p-3">
-                            <p className="text-xs text-muted-foreground">Market Cap</p>
-                            <p className="font-bold">{m.stock.marketCap}</p>
-                          </Card>
-                          <Card className="p-3">
-                            <p className="text-xs text-muted-foreground">52W Range</p>
-                            <p className="font-bold text-xs">${m.stock.low52w} – ${m.stock.high52w}</p>
-                          </Card>
-                        </div>
-                        <StockChart stock={m.stock} />
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Input */}
-          <div className="flex gap-2 pt-2 border-t">
+        {/* Input bar */}
+        <CardContent className="border-t pt-3 pb-3">
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSend();
+            }}
+          >
             <Input
-              placeholder="Ask about a stock... (e.g. 'Should I buy Apple?')"
+              placeholder="Ask about any stock or financial topic…"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              disabled={loading}
+              className="flex-1"
             />
-            <Button onClick={() => handleSend()} size="icon">
-              <Send className="h-4 w-4" />
+            <Button type="submit" size="icon" disabled={loading || !input.trim()}>
+              {loading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <Send size={16} />
+              )}
             </Button>
-          </div>
+          </form>
         </CardContent>
       </Card>
     </div>

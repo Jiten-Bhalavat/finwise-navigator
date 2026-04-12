@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local secrets (never commit)
+.env
+.env.*
+!.env.example
+
+# Excluded nested project
+instant-ai-conversations-orchestra/

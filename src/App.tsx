@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { PortfolioProvider } from "@/context/PortfolioContext";
 import AppLayout from "@/components/AppLayout";
 import DashboardHome from "@/pages/DashboardHome";
 import LearnPage from "@/pages/Learn";
@@ -18,18 +19,20 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<DashboardHome />} />
-            <Route path="/learn" element={<LearnPage />} />
-            <Route path="/advisor" element={<AdvisorPage />} />
-            <Route path="/news" element={<NewsPage />} />
-            <Route path="/trade" element={<TradePage />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <PortfolioProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<DashboardHome />} />
+              <Route path="/learn" element={<LearnPage />} />
+              <Route path="/advisor" element={<AdvisorPage />} />
+              <Route path="/news" element={<NewsPage />} />
+              <Route path="/trade" element={<TradePage />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </PortfolioProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

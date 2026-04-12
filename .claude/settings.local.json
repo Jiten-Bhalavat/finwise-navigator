@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run:*)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":8080\")",
+      "Bash(tasklist:*)",
+      "Bash(cmd:*)",
+      "Bash(powershell:*)",
+      "Bash(node -e ':*)",
+      "WebFetch(domain:dribbble.com)",
+      "Bash(npx vite:*)",
+      "Bash(node -e \"const lc = require\\('./node_modules/lightweight-charts/dist/lightweight-charts.standalone.development.js'\\); console.log\\('version check ok'\\)\")",
+      "WebFetch(domain:api.nessieisreal.com)",
+      "WebFetch(domain:nessieisreal.com)",
+      "WebFetch(domain:www.capitalone.com)",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "WebFetch(domain:www.postman.com)",
+      "Bash(node -e \"const {createRequire} = require\\('module'\\); const req = createRequire\\(import.meta.url\\); \")",
+      "Bash(node -e \"import\\('lucide-react'\\).then\\(m => { console.log\\('ShoppingCart:', !!m.ShoppingCart, 'DollarSign:', !!m.DollarSign\\) }\\)\")"
+    ]
+  }
+}
