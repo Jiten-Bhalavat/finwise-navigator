@@ -4,16 +4,11 @@ import {
   Newspaper,
   TrendingUp,
   LayoutDashboard,
-  Eye,
-  BarChart2,
-  LineChart,
-  Wrench,
   Sparkles,
-  ChevronRight,
   X,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -28,40 +23,27 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
-  {
-    title: "Dashboard",
-    url: "/",
-    icon: LayoutDashboard,
-    sparkle: true,
-    children: [
-      { title: "Overview", url: "/" },
-      { title: "Watchlist", url: "/#watchlist" },
-    ],
-  },
-  { title: "Learn",    url: "/learn",    icon: GraduationCap },
-  { title: "Advisor",  url: "/advisor",  icon: Brain },
-  { title: "News",     url: "/news",     icon: Newspaper },
-  { title: "Trade",    url: "/trade",    icon: TrendingUp },
-];
-
-const bottomNav = [
-  { title: "Watchlist",   icon: Eye },
-  { title: "Investments", icon: BarChart2 },
-  { title: "Markets",     icon: LineChart },
-  { title: "Tools",       icon: Wrench },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, sparkle: true },
+  { title: "Learn",     url: "/learn",     icon: GraduationCap },
+  { title: "Advisor",   url: "/advisor",   icon: Brain },
+  { title: "News",      url: "/news",      icon: Newspaper },
+  { title: "Trade",     url: "/trade",     icon: TrendingUp },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-white">
       {/* Logo */}
       <SidebarHeader className="px-5 py-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-2.5">
-          {/* Colorful multi-block logo like Credly */}
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2.5 hover:opacity-75 transition-opacity"
+        >
           <div className="h-8 w-8 rounded-lg grid grid-cols-2 gap-0.5 p-1 shrink-0" style={{ background: "white" }}>
             <div className="rounded-sm bg-orange-400" />
             <div className="rounded-sm bg-indigo-500" />
@@ -71,7 +53,7 @@ export function AppSidebar() {
           {!collapsed && (
             <span className="font-bold text-[17px] text-foreground tracking-tight">FinWise</span>
           )}
-        </div>
+        </button>
       </SidebarHeader>
 
       <SidebarContent className="py-3">
@@ -103,26 +85,9 @@ export function AppSidebar() {
                           <item.icon className={`h-4 w-4 shrink-0 ${isActive ? "text-secondary-foreground" : ""}`} />
                         )}
                         {!collapsed && <span>{item.title}</span>}
-                        {!collapsed && item.children && (
-                          <ChevronRight className={`h-3.5 w-3.5 ml-auto transition-transform ${isActive ? "rotate-90" : ""}`} />
-                        )}
                       </NavLink>
                     </SidebarMenuButton>
 
-                    {/* Sub-items when active */}
-                    {!collapsed && isActive && item.children && (
-                      <div className="ml-9 mt-0.5 flex flex-col gap-0.5">
-                        {item.children.map((child) => (
-                          <a
-                            key={child.title}
-                            href={child.url}
-                            className="text-xs text-primary font-medium py-1 px-2 rounded-lg hover:bg-secondary/50 transition-colors"
-                          >
-                            {child.title}
-                          </a>
-                        ))}
-                      </div>
-                    )}
                   </SidebarMenuItem>
                 );
               })}
@@ -130,25 +95,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Secondary nav (Watchlist, Investments, etc.) */}
-        {!collapsed && (
-          <SidebarGroup className="mt-2">
-            <SidebarGroupContent>
-              <SidebarMenu className="gap-0.5 px-3">
-                {bottomNav.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <button className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-sidebar-foreground/60 hover:bg-muted/60 hover:text-foreground transition-all duration-150">
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        <span>{item.title}</span>
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
       {/* Trading Masterclass promo card */}

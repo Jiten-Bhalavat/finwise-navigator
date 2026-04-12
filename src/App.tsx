@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PortfolioProvider } from "@/context/PortfolioContext";
 import AppLayout from "@/components/AppLayout";
+import HomePage from "@/pages/HomePage";
 import DashboardHome from "@/pages/DashboardHome";
 import LearnPage from "@/pages/Learn";
 import AdvisorPage from "@/pages/Advisor";
@@ -22,8 +23,11 @@ const App = () => (
       <PortfolioProvider>
         <BrowserRouter>
           <Routes>
+            {/* Landing page — no sidebar */}
+            <Route path="/" element={<HomePage />} />
+            {/* App — with sidebar layout */}
             <Route element={<AppLayout />}>
-              <Route path="/" element={<DashboardHome />} />
+              <Route path="/dashboard" element={<DashboardHome />} />
               <Route path="/learn" element={<LearnPage />} />
               <Route path="/advisor" element={<AdvisorPage />} />
               <Route path="/news" element={<NewsPage />} />

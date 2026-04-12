@@ -30,3 +30,15 @@ dist-ssr
 
 # Excluded nested project
 instant-ai-conversations-orchestra/
+
+# Claude Code local settings
+.claude/
+
+# Python / backend
+__pycache__/
+*.py[cod]
+*.pyo
+backend/venv/
+backend/env/
+backend/.venv/
+backend/.env
