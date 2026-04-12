@@ -7,7 +7,7 @@
 ## Demo
 
 <!-- Upload your demo video/gif here -->
-_Demo coming soon_
+https://github.com/user-attachments/assets/6edfe61f-28af-473c-8823-fab4a584d5c1
 
 ---
 
