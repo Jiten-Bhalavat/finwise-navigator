@@ -15,13 +15,19 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const stripTrailingSlash = (s: string) => s.replace(/\/$/, "") || "/";
+const routerBasename = (() => {
+  const b = stripTrailingSlash(import.meta.env.BASE_URL);
+  return b === "/" ? undefined : b;
+})();
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <PortfolioProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={routerBasename}>
           <Routes>
             {/* Landing page — no sidebar */}
             <Route path="/" element={<HomePage />} />

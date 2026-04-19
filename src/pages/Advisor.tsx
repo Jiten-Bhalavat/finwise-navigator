@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
-const BACKEND_URL = "http://localhost:8000";
+const BACKEND_URL =
+  (import.meta.env.VITE_ADVISOR_API_URL as string | undefined) ?? "http://localhost:8000";
 
 // ─── Tool metadata ──────────────────────────────────────────────────────────
 
