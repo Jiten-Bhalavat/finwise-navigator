@@ -1,3 +1,5 @@
+# Publishes the Vite build to GitHub Pages. After pushing, open the repo on GitHub:
+# Actions → "Deploy to GitHub Pages" → "Run workflow" (manual) or wait for push to main.
 name: Deploy to GitHub Pages
 
 on:
@@ -38,7 +40,7 @@ jobs:
           npm run build
           cp dist/index.html dist/404.html
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: dist
 
